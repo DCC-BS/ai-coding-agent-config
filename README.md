@@ -13,7 +13,7 @@ Jedes Team baut seinen eigenen DevContainer auf Basis dieser Vorlage und ergänz
 Diese Eigenschaften müssen in jeder abgeleiteten Variante erhalten bleiben:
 
 1. **Nur der Workspace ist gemountet** (`/workspace`). Keine Host-Laufwerke, keine Benutzerprofile, keine Windows-Credentials, kein `/var/run/docker.sock`.
-2. **Egress nur über den filternden Proxy** (`init-egress.sh`), Standardrichtlinie `DROP`. Ausgehenden Verkehr darf allein der Benutzer `proxy` erzeugen; er entscheidet nach Namen aus `allowlist.txt`. Der Agent hat kein DNS. Beim Start prüft das Skript, dass ein freigegebenes Ziel antwortet, ein nicht freigegebenes abgewiesen wird und am Proxy vorbei nichts hinausgeht.
+2. **Egress nur über den filternden Proxy** (`init-egress.sh`), Standardrichtlinie `DROP` für IPv4 und IPv6. Ausgehenden Verkehr darf allein der Benutzer `proxy` erzeugen; er entscheidet nach Namen aus `allowlist.txt` und weist rohe IP-Adressen ab. Der Agent hat kein DNS. Die Regeln gelten, bevor der Proxy startet und bevor ein Lifecycle-Befehl läuft, sodass ein Fehler zu einem Container ohne Netz führt und nicht zu einem ohne Filter. Beim Start prüft das Skript fünf Bedingungen und bricht bei jeder Abweichung ab.
 3. **Unprivilegierter Benutzer** `vscode`. Kein allgemeines `sudo`; erlaubt ist einzig der Aufruf des Firewall-Skripts.
 4. **Verwaltete Agentenkonfiguration im Image**, root-eigen und nur lesbar:
    - Claude Code: `/etc/claude-code/managed-settings.json`
@@ -30,7 +30,8 @@ Wer eines dieser Merkmale abschwächt, betreibt ein eigenes Einsatzprofil und br
 |---|---|
 | `.devcontainer/devcontainer.json` | DevContainer-Definition (Mounts, Capabilities, Firewall-Start) |
 | `.devcontainer/Dockerfile` | Basis-Image, Firewall-Werkzeuge, verankerte Konfiguration, `sudo`-Beschränkung |
-| `.devcontainer/init-egress.sh` | Startet den Proxy, setzt die Firewall, prüft die Wirkung |
+| `.devcontainer/init-egress.sh` | Setzt die Firewall, startet den Proxy, prüft die Wirkung |
+| `.devcontainer/entrypoint.sh` | Ruft die Egress-Kontrolle vor allen Lifecycle-Befehlen auf |
 | `.devcontainer/squid.conf` | Proxy-Konfiguration |
 | `.devcontainer/allowlist.txt` | Freigegebene Ziele, nach Namen |
 | `.devcontainer/managed-settings.json` | Claude Code Referenzkonfiguration |
@@ -45,6 +46,8 @@ cp -r ai-coding-agent-config/.devcontainer <euer-projekt>/.devcontainer
 ```
 
 Anschliessend im Dockerfile die eigene Toolchain ergänzen und die dafür nötigen Ziele als Namen in `allowlist.txt` eintragen. Danach in VS Code **Dev Containers: Reopen in Container**.
+
+Haltet fest, von welchem Commit dieses Repositorys euer Container abgeleitet ist. Ohne diese Angabe ist eine Freigabe gegen einen Stand erteilt, den niemand mehr benennen kann, und eine Korrektur hier erreicht euren Container nur zufällig.
 
 Details und Prüfschritte: [`.devcontainer/README.md`](.devcontainer/README.md).
 

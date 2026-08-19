@@ -15,9 +15,12 @@
 # :workspace als auch :read-only erlaubt sind, und bricht sonst ab.
 default_permissions = "bs-restricted-edit"
 
-# Erlaubte Freigabemodi. "never" fehlt bewusst: unbeaufsichtigter Betrieb
-# ist damit ausgeschlossen (Leitfaden Abschnitt 6, Ziffer 2).
-allowed_approval_policies = ["untrusted", "on-request"]
+# Erlaubte Freigabemodi. Nur "untrusted" entspricht Abschnitt 6, Ziffer 2:
+# automatisch laufen dort ausschliesslich bekannt harmlose, nur lesende
+# Befehle, alles Übrige wird bestätigt. "on-search" gibt es nicht, und
+# "on-request" überlässt dem Modell die Entscheidung, wann es nachfragt,
+# was der Vorgabe widerspricht. "never" wäre unbeaufsichtigter Betrieb.
+allowed_approval_policies = ["untrusted"]
 
 # Erlaubte Sandbox-Modi. danger-full-access ist damit gesperrt.
 allowed_sandbox_modes = ["read-only", "workspace-write"]
@@ -41,13 +44,23 @@ extends = ":read-only"
 enabled = false
 
 [permissions.bs-restricted-edit]
-description = "Schreibzugriff nur im Workspace, kein Netzwerk"
+description = "Schreibzugriff nur im Workspace, Netz nur über den Container-Proxy"
 extends = ":workspace"
 
+# Netz bleibt eingeschaltet, sonst könnten Abhängigkeiten nicht installiert
+# werden und die Paketquellen der Allowlist wären wirkungslos. Die Grenze
+# zieht nicht Codex, sondern die Egress-Kontrolle des Containers: Ausgang nur
+# über den Proxy, und nur zu den Namen aus allowlist.txt.
 [permissions.bs-restricted-edit.network]
-enabled = false
+enabled = true
 
 # Leere Tabelle = Allowlist ohne Einträge: jeder in einer Nutzer- oder
 # Projektkonfiguration definierte MCP-Server wird deaktiviert. Wird der
 # Schlüssel dagegen ganz weggelassen, sind MCP-Server erlaubt.
 [mcp_servers]
+
+# Windows: nur die elevated Sandbox zulassen, damit kein Rückfall auf den
+# unelevated Modus möglich ist (Leitfaden Anhang C). Im Linux-Container
+# wirkungslos, aber Teil derselben verwalteten Vorgabe.
+[windows]
+allowed_sandbox_implementations = ["elevated"]

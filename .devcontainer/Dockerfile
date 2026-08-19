@@ -1,5 +1,5 @@
 # Multi-platform DevContainer for Claude Code and OpenAI Codex
-FROM mcr.microsoft.com/devcontainers/base:debian-12
+FROM mcr.microsoft.com/devcontainers/base@sha256:23fa69fed758b7927c60061317d73baf7d66b9fca5c344e80bce3a940b229af0
 
 USER root
 
@@ -59,10 +59,12 @@ COPY allowlist.txt /etc/squid/allowlist.txt
 RUN chown root:root /etc/squid/squid.conf /etc/squid/allowlist.txt \
     && chmod 0444 /etc/squid/squid.conf /etc/squid/allowlist.txt
 
-# 7. Copy and configure the egress startup script
+# 7. Copy and configure the egress startup script and the entrypoint that
+#    runs it before any lifecycle command gets a chance to reach the network.
 COPY init-egress.sh /usr/local/bin/init-egress.sh
-RUN chown root:root /usr/local/bin/init-egress.sh \
-    && chmod 0755 /usr/local/bin/init-egress.sh
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+RUN chown root:root /usr/local/bin/init-egress.sh /usr/local/bin/entrypoint.sh \
+    && chmod 0755 /usr/local/bin/init-egress.sh /usr/local/bin/entrypoint.sh
 
 # 8. Restrict sudo permissions for vscode user (only egress initialization allowed)
 RUN rm -f /etc/sudoers.d/vscode \
@@ -89,3 +91,6 @@ ENV HTTP_PROXY=http://127.0.0.1:3128 \
 # Fall, bei rootless Docker nicht (siehe README, Abschnitt "Rootless Docker").
 USER vscode
 WORKDIR /workspace
+
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
+CMD ["sleep", "infinity"]

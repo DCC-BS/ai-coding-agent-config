@@ -7,9 +7,10 @@ Das Template ist zum Ableiten gedacht. Jedes Team baut daraus seinen eigenen Con
 ## Funktionsweise und Sicherheitsmerkmale
 - **Plattformunabhängig:** Läuft direkt auf Linux (rootful Docker) sowie unter Windows (WSL 2 mit Docker Desktop). Zu rootless Docker siehe unten.
 - **Prozess- und Dateikapselung:** Nur der freigegebene Workspace (`/workspace`) wird gemountet. Kein Zugriff auf Host-Laufwerke, Benutzerprofile oder Windows-Credentials.
-- **Egress nur über einen filternden Proxy:** Standard-Richtlinie `DROP`. Ausgehenden Verkehr darf allein der Benutzer `proxy` erzeugen (`iptables -m owner --uid-owner`). Der Proxy entscheidet nach Namen, nicht nach Adressen, anhand von `allowlist.txt`.
+- **Egress nur über einen filternden Proxy:** Standard-Richtlinie `DROP` für IPv4 und IPv6. Ausgehenden Verkehr darf allein der Benutzer `proxy` erzeugen (`iptables -m owner --uid-owner`). Der Proxy entscheidet nach Namen, nicht nach Adressen, anhand von `allowlist.txt`. Rohe IP-Adressen als Ziel weist er ab.
+- **Fail-closed:** Die Regeln gelten, bevor der Proxy startet, und der Entrypoint setzt sie, bevor irgendein Lifecycle-Befehl läuft. Scheitert der Proxy, etwa an einem Tippfehler in der Allowlist, bleibt der Container ohne Netz statt ohne Filter.
 - **Kein DNS für den Agenten:** Namen auflösen darf nur der Proxy. Damit lassen sich auch keine Daten in Anfragenamen nach aussen tragen.
-- **Rechtebeschränkung:** Unprivilegierter Benutzer `vscode`. Passwortloses `sudo` ist ausschliesslich auf `/usr/local/bin/init-egress.sh` beschränkt.
+- **Rechtebeschränkung:** Gearbeitet wird als unprivilegierter Benutzer `vscode`; Terminals, Agent und alle Lifecycle-Befehle laufen unter ihm. Der Container selbst startet als `root`, damit der Entrypoint die Egress-Kontrolle setzen kann, bevor irgendetwas anderes läuft. Passwortloses `sudo` für `vscode` ist ausschliesslich auf `/usr/local/bin/init-egress.sh` beschränkt.
 - **Verwaltete Konfigurationen:**
   - Claude Code: `/etc/claude-code/managed-settings.json` (root-eigen, read-only 0444)
   - OpenAI Codex: `/etc/codex/requirements.toml` (root-eigen, read-only 0444)
@@ -45,11 +46,12 @@ Das Template ist zum Ableiten gedacht. Jedes Team baut daraus seinen eigenen Con
 ```bash
 curl -s -o /dev/null -w '%{http_code}\n' https://api.github.com   # 200
 curl -s -o /dev/null -w '%{http_code}\n' https://example.com      # 000, nicht auf der Allowlist
-env -u https_proxy curl -s -o /dev/null -w '%{http_code}\n' --max-time 6 https://api.github.com   # 000, am Proxy vorbei
-dig +short github.com    # Zeitüberschreitung, der Agent hat kein DNS
+curl -s -o /dev/null -w '%{http_code}\n' -k https://140.82.112.3  # 000, rohe IP-Adresse
+env -u https_proxy curl -s -o /dev/null -w '%{http_code}\n' --max-time 6 https://1.1.1.1  # 000, am Proxy vorbei
+getent hosts example.com    # leer, der Agent hat kein DNS
 ```
 
-Die dritte Zeile ist der Punkt, an dem sich dieser Aufbau von einer Firewall mit Adresslisten unterscheidet: Auch eine Verbindung zu einer rohen IP-Adresse kommt nicht durch.
+Die dritte und vierte Zeile unterscheiden diesen Aufbau von einer Firewall mit Adresslisten. Geprüft wird gegen eine rohe IP-Adresse und nicht gegen einen Namen: Ein Name scheitert schon an der DNS-Sperre, und die Prüfung bestünde dann auch, wenn die Firewall ein Loch hätte.
 
 ## Ein Ziel freischalten
 
@@ -75,19 +77,26 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
       openjdk-21-jdk-headless \
     && apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# uv und eine feste Python-Version
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
+# uv und eine feste Python-Version. Digest statt beweglichem Tag, damit der
+# Bau reproduzierbar bleibt und niemand unbemerkt etwas anderes ausliefert.
+COPY --from=ghcr.io/astral-sh/uv:0.9.7@sha256:<digest> /uv /usr/local/bin/uv
 RUN uv python install 3.12
 
-# bun
-RUN curl -fsSL https://bun.sh/install | bash
+# bun aus dem Release-Archiv mit geprüfter Prüfsumme. Ein Installationsskript
+# per `curl | bash` auszuführen wäre in der Bauphase besonders heikel, weil sie
+# ungefiltert ins Netz darf und das Ergebnis dauerhaft im Image landet.
+RUN curl -fsSLO https://github.com/oven-sh/bun/releases/download/bun-v1.2.21/bun-linux-x64.zip \
+    && echo "<sha256>  bun-linux-x64.zip" | sha256sum -c - \
+    && unzip -q bun-linux-x64.zip && install -m0755 bun-linux-x64/bun /usr/local/bin/bun \
+    && rm -rf bun-linux-x64*
 
 USER vscode
 ```
 
 Zwei Punkte sind dabei zu beachten:
 
-1. **Allowlist nachführen.** Was zur Bauzeit heruntergeladen wird, läuft an der Egress-Kontrolle vorbei. Was zur Laufzeit erreichbar sein soll, etwa Maven Central oder `crates.io`, gehört als Name in `allowlist.txt`.
+1. **Allowlist nachführen.** Was zur Laufzeit erreichbar sein soll, etwa Maven Central oder `crates.io`, gehört als Name in `allowlist.txt`.
+   Was zur **Bauzeit** heruntergeladen wird, läuft an der Egress-Kontrolle vorbei und ist danach dauerhaft im Image. Diese Phase ist bewusst nicht gefiltert, das entspricht auch der Referenzumgebung von Anthropic. Sie ist dafür wie Quellcode zu behandeln: Quellen pinnen statt `curl | bash`, Images per Digest statt per Tag, und der `Dockerfile` gehört ins Review.
 2. **Sicherheitsmerkmale nicht aufweichen.** Mounts, Egress-Kontrolle, unprivilegierter Benutzer und die root-eigenen Konfigurationsdateien bleiben unverändert. Wer davon abweicht, betreibt ein eigenes Einsatzprofil mit erneuter Freigabepflicht.
 
 ## Voraussetzung: rootful Docker

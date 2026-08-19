@@ -45,7 +45,6 @@
   "disableSideloadFlags": true,
   "disableAutoMode": "disable",
   "forceLoginMethod": "claudeai",
-  "forceLoginOrgUUID": "<Organisations-UUID des Kantons>",
   "sandbox": {
     "enabled": true,
     "failIfUnavailable": true,
@@ -90,9 +89,7 @@
     }
   },
   "env": {
-    "DISABLE_TELEMETRY": "1",
-    "DISABLE_ERROR_REPORTING": "1",
-    "DISABLE_NON_ESSENTIAL_MODEL_CALLS": "1",
+    "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1",
     "DISABLE_AUTOUPDATER": "1"
   }
 }
