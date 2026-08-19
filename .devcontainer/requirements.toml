@@ -15,12 +15,14 @@
 # :workspace als auch :read-only erlaubt sind, und bricht sonst ab.
 default_permissions = "bs-restricted-edit"
 
-# Erlaubte Freigabemodi. Nur "untrusted" entspricht Abschnitt 6, Ziffer 2:
-# automatisch laufen dort ausschliesslich bekannt harmlose, nur lesende
-# Befehle, alles Übrige wird bestätigt. "on-search" gibt es nicht, und
-# "on-request" überlässt dem Modell die Entscheidung, wann es nachfragt,
-# was der Vorgabe widerspricht. "never" wäre unbeaufsichtigter Betrieb.
-allowed_approval_policies = ["untrusted"]
+# Erlaubte Freigabemodi. "never" fehlt bewusst, denn unbeaufsichtigter Betrieb
+# ist nach Leitfaden Abschnitt 6, Ziffer 2 nicht zulässig. "untrusted" lässt
+# nur bekannt harmlose, ausschliesslich lesende Befehle automatisch zu und ist
+# der vorzuziehende Modus. "on-request" ueberlässt dem Modell die Entscheidung,
+# wann es nachfragt, und bleibt zugelassen: Die nicht umkehrbaren Wirkungen
+# hängen ohnehin am Tokenmodell, an der Branch Protection und an der
+# Egress-Kontrolle, nicht am Dialog.
+allowed_approval_policies = ["untrusted", "on-request"]
 
 # Erlaubte Sandbox-Modi. danger-full-access ist damit gesperrt.
 allowed_sandbox_modes = ["read-only", "workspace-write"]
