@@ -9,13 +9,12 @@ ENV DEBIAN_FRONTEND=noninteractive
 # 1. Install base utilities and firewall dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     iptables \
-    ipset \
     iproute2 \
+    squid \
     dnsutils \
     curl \
     wget \
     jq \
-    aggregate \
     git \
     ca-certificates \
     gnupg \
@@ -52,19 +51,36 @@ RUN chown -R root:root /etc/codex \
     && chmod 0755 /etc/codex \
     && chmod 0444 /etc/codex/requirements.toml
 
-# 6. Copy and configure Egress Firewall startup script
-COPY init-firewall.sh /usr/local/bin/init-firewall.sh
-RUN chown root:root /usr/local/bin/init-firewall.sh \
-    && chmod 0755 /usr/local/bin/init-firewall.sh
+# 6. Copy and lock down the egress proxy configuration.
+#    The allowlist filters by hostname, so it also covers connections made to a
+#    raw IP address. An address-based firewall cannot do that.
+COPY squid.conf /etc/squid/squid.conf
+COPY allowlist.txt /etc/squid/allowlist.txt
+RUN chown root:root /etc/squid/squid.conf /etc/squid/allowlist.txt \
+    && chmod 0444 /etc/squid/squid.conf /etc/squid/allowlist.txt
 
-# 7. Restrict sudo permissions for vscode user (only firewall initialization allowed)
+# 7. Copy and configure the egress startup script
+COPY init-egress.sh /usr/local/bin/init-egress.sh
+RUN chown root:root /usr/local/bin/init-egress.sh \
+    && chmod 0755 /usr/local/bin/init-egress.sh
+
+# 8. Restrict sudo permissions for vscode user (only egress initialization allowed)
 RUN rm -f /etc/sudoers.d/vscode \
-    && echo "vscode ALL=(root) NOPASSWD: /usr/local/bin/init-firewall.sh" > /etc/sudoers.d/010-firewall \
-    && chmod 0440 /etc/sudoers.d/010-firewall
+    && echo "vscode ALL=(root) NOPASSWD: /usr/local/bin/init-egress.sh" > /etc/sudoers.d/010-egress \
+    && chmod 0440 /etc/sudoers.d/010-egress
 
-# 8. Hier ergänzt jedes Projekt seine eigene Toolchain, z. B. uv mit einer
-#    festen Python-Version, ein JDK, bun oder Node. Neue Paketquellen gehören
-#    zusätzlich in die Allowlist von init-firewall.sh.
+# 9. Route every client through the proxy. The firewall blocks anything else,
+#    so a tool that ignores these variables simply has no network.
+ENV HTTP_PROXY=http://127.0.0.1:3128 \
+    HTTPS_PROXY=http://127.0.0.1:3128 \
+    http_proxy=http://127.0.0.1:3128 \
+    https_proxy=http://127.0.0.1:3128 \
+    NO_PROXY=localhost,127.0.0.1 \
+    no_proxy=localhost,127.0.0.1
+
+# 10. Hier ergänzt jedes Projekt seine eigene Toolchain, z. B. uv mit einer
+#     festen Python-Version, ein JDK, bun oder Node. Neue Paketquellen gehören
+#     zusätzlich als Namen in allowlist.txt.
 
 # Set unprivileged user.
 # Hinweis: /workspace wird zur Laufzeit überdeckt (bind mount). Damit vscode

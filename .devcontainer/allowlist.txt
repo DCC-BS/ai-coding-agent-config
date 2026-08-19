@@ -1,0 +1,30 @@
+# Egress-Allowlist des Proxys. Eine Zeile pro Name.
+# Ein führender Punkt schliesst alle Subdomains ein: .github.com deckt auch
+# github.com und api.github.com ab. Name und Punkt-Form dürfen nicht beide
+# vorkommen, squid bricht sonst beim Start ab.
+#
+# Die Datei gehört root und ist im laufenden Container nicht veränderbar.
+# Änderungen erfolgen im Repository und wirken beim nächsten Bau.
+
+# --- Grundbestand: Modellanbieter. Nicht entfernen. ---
+.anthropic.com
+.openai.com
+.chatgpt.com
+
+# --- Grundbestand: Codeverwaltung. Nicht entfernen. ---
+.github.com
+.githubusercontent.com
+
+# --- Grundbestand: Paketquellen und VS-Code-Marktplatz. ---
+registry.npmjs.org
+registry.yarnpkg.com
+.pypi.org
+files.pythonhosted.org
+.visualstudio.com
+vscode.blob.core.windows.net
+
+# --- Projektspezifische Ergänzungen ---
+# Hier trägt die nutzende Stelle ein, was ihr Projekt braucht. Jeder Eintrag
+# ist ein eigener Weg für Prompt Injection und für Datenabfluss und gehoert
+# deshalb ins Review. Beispiel:
+# www.bs.ch

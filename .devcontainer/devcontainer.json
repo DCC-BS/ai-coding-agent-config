@@ -13,7 +13,7 @@
     "--cap-add=NET_RAW",
     "--init"
   ],
-  "postStartCommand": "sudo /usr/local/bin/init-firewall.sh",
+  "postStartCommand": "sudo /usr/local/bin/init-egress.sh",
   "waitFor": "postStartCommand",
   "customizations": {
     "vscode": {

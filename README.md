@@ -13,7 +13,7 @@ Jedes Team baut seinen eigenen DevContainer auf Basis dieser Vorlage und ergänz
 Diese Eigenschaften müssen in jeder abgeleiteten Variante erhalten bleiben:
 
 1. **Nur der Workspace ist gemountet** (`/workspace`). Keine Host-Laufwerke, keine Benutzerprofile, keine Windows-Credentials, kein `/var/run/docker.sock`.
-2. **Egress-Firewall mit Allowlist** im Container (`init-firewall.sh`), Standardrichtlinie `DROP`, mit Wirkungsprüfung beim Start.
+2. **Egress nur über den filternden Proxy** (`init-egress.sh`), Standardrichtlinie `DROP`. Ausgehenden Verkehr darf allein der Benutzer `proxy` erzeugen; er entscheidet nach Namen aus `allowlist.txt`. Der Agent hat kein DNS. Beim Start prüft das Skript, dass ein freigegebenes Ziel antwortet, ein nicht freigegebenes abgewiesen wird und am Proxy vorbei nichts hinausgeht.
 3. **Unprivilegierter Benutzer** `vscode`. Kein allgemeines `sudo`; erlaubt ist einzig der Aufruf des Firewall-Skripts.
 4. **Verwaltete Agentenkonfiguration im Image**, root-eigen und nur lesbar:
    - Claude Code: `/etc/claude-code/managed-settings.json`
@@ -30,7 +30,9 @@ Wer eines dieser Merkmale abschwächt, betreibt ein eigenes Einsatzprofil und br
 |---|---|
 | `.devcontainer/devcontainer.json` | DevContainer-Definition (Mounts, Capabilities, Firewall-Start) |
 | `.devcontainer/Dockerfile` | Basis-Image, Firewall-Werkzeuge, verankerte Konfiguration, `sudo`-Beschränkung |
-| `.devcontainer/init-firewall.sh` | Egress-Firewall mit Allowlist und Wirkungsprüfung |
+| `.devcontainer/init-egress.sh` | Startet den Proxy, setzt die Firewall, prüft die Wirkung |
+| `.devcontainer/squid.conf` | Proxy-Konfiguration |
+| `.devcontainer/allowlist.txt` | Freigegebene Ziele, nach Namen |
 | `.devcontainer/managed-settings.json` | Claude Code Referenzkonfiguration |
 | `.devcontainer/requirements.toml` | Codex: Definition der kantonalen Profile und Einschränkung der wählbaren Optionen |
 | `config/claude-code-settings-erweitert.example.json` | Erweitertes Beispiel mit Sandbox- und Organisationsvorgaben (Architektur 1 und 2, ohne Container) |
@@ -42,7 +44,7 @@ git clone https://github.com/DCC-BS/ai-coding-agent-config.git
 cp -r ai-coding-agent-config/.devcontainer <euer-projekt>/.devcontainer
 ```
 
-Anschliessend im Dockerfile die eigene Toolchain ergänzen und in `init-firewall.sh` die dafür nötigen Paketquellen in die Allowlist aufnehmen. Danach in VS Code **Dev Containers: Reopen in Container**.
+Anschliessend im Dockerfile die eigene Toolchain ergänzen und die dafür nötigen Ziele als Namen in `allowlist.txt` eintragen. Danach in VS Code **Dev Containers: Reopen in Container**.
 
 Details und Prüfschritte: [`.devcontainer/README.md`](.devcontainer/README.md).
 

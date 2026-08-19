@@ -7,8 +7,9 @@ Das Template ist zum Ableiten gedacht. Jedes Team baut daraus seinen eigenen Con
 ## Funktionsweise und Sicherheitsmerkmale
 - **Plattformunabhängig:** Läuft direkt auf Linux (rootful Docker) sowie unter Windows (WSL 2 mit Docker Desktop). Zu rootless Docker siehe unten.
 - **Prozess- und Dateikapselung:** Nur der freigegebene Workspace (`/workspace`) wird gemountet. Kein Zugriff auf Host-Laufwerke, Benutzerprofile oder Windows-Credentials.
-- **Egress-Firewall:** Standard-Richtlinie `DROP`. Nur freigegebene APIs (Anthropic, OpenAI, GitHub, npm, PyPI, VS Code Marketplace) und Nameserver aus `/etc/resolv.conf` sind erreichbar.
-- **Rechtebeschränkung:** Unprivilegierter Benutzer `vscode`. Passwortloses `sudo` ist ausschliesslich auf `/usr/local/bin/init-firewall.sh` beschränkt.
+- **Egress nur über einen filternden Proxy:** Standard-Richtlinie `DROP`. Ausgehenden Verkehr darf allein der Benutzer `proxy` erzeugen (`iptables -m owner --uid-owner`). Der Proxy entscheidet nach Namen, nicht nach Adressen, anhand von `allowlist.txt`.
+- **Kein DNS für den Agenten:** Namen auflösen darf nur der Proxy. Damit lassen sich auch keine Daten in Anfragenamen nach aussen tragen.
+- **Rechtebeschränkung:** Unprivilegierter Benutzer `vscode`. Passwortloses `sudo` ist ausschliesslich auf `/usr/local/bin/init-egress.sh` beschränkt.
 - **Verwaltete Konfigurationen:**
   - Claude Code: `/etc/claude-code/managed-settings.json` (root-eigen, read-only 0444)
   - OpenAI Codex: `/etc/codex/requirements.toml` (root-eigen, read-only 0444)
@@ -38,15 +39,31 @@ Das Template ist zum Ableiten gedacht. Jedes Team baut daraus seinen eigenen Con
   ```
   Beim Start meldet Codex `approval: untrusted` und `sandbox: workspace-write`. Versuche, das zu übersteuern (`--dangerously-bypass-approvals-and-sandbox`, `-c default_permissions=":danger-full-access"`), werden ignoriert.
 
-### 4. Firewall-Funktion prüfen
-Im Container-Terminal:
-```bash
-# Erlaubtes Ziel (erfolgreich):
-curl -I https://api.github.com
+### 4. Egress-Kontrolle prüfen
+`init-egress.sh` prüft beim Start selbst und bricht ab, wenn eine der drei Bedingungen nicht hält. Von Hand nachvollziehen lässt sich das so:
 
-# Gesperrtes Ziel (Timeout / Blocked):
-curl --connect-timeout 2 http://1.1.1.1
+```bash
+curl -s -o /dev/null -w '%{http_code}\n' https://api.github.com   # 200
+curl -s -o /dev/null -w '%{http_code}\n' https://example.com      # 000, nicht auf der Allowlist
+env -u https_proxy curl -s -o /dev/null -w '%{http_code}\n' --max-time 6 https://api.github.com   # 000, am Proxy vorbei
+dig +short github.com    # Zeitüberschreitung, der Agent hat kein DNS
 ```
+
+Die dritte Zeile ist der Punkt, an dem sich dieser Aufbau von einer Firewall mit Adresslisten unterscheidet: Auch eine Verbindung zu einer rohen IP-Adresse kommt nicht durch.
+
+## Ein Ziel freischalten
+
+Braucht ein Projekt einen weiteren Host, kommt sein Name in `allowlist.txt`:
+
+```
+www.bs.ch
+```
+
+Ein führender Punkt schliesst Subdomains ein (`.github.com` deckt `api.github.com` mit ab). Name und Punkt-Form dürfen nicht beide vorkommen, sonst bricht squid beim Start ab. Die Datei gehört `root` und ist im laufenden Container nicht veränderbar; Änderungen gehören ins Repository und wirken beim nächsten Bau.
+
+Ein Name genügt, und er bleibt gültig. Das ist der Grund für den Proxy: Bei einer Firewall mit Adresslisten müsste die Adresse beim Start aufgelöst und festgeschrieben werden. Für Hosts hinter einem CDN geht das schief. `www.bs.ch` zeigt über `dualstack.t.sni.global.fastly.net` auf vier Fastly-Adressen mit einer TTL von 59 Sekunden. Beim Test funktioniert es, Stunden später nicht mehr, und der Fehler sieht aus wie ein Fehler des Agenten.
+
+Jeder zusätzliche Eintrag ist zugleich ein Weg für Prompt Injection und für Datenabfluss. Paketquellen sind Routine. Ein Host mit beliebigen Inhalten wie `www.bs.ch` gehört ins Review.
 
 ## Eigene Toolchain ergänzen
 
@@ -70,8 +87,8 @@ USER vscode
 
 Zwei Punkte sind dabei zu beachten:
 
-1. **Allowlist nachführen.** Was zur Bauzeit heruntergeladen wird, ist von der Firewall nicht betroffen. Was zur Laufzeit erreichbar sein soll (Paketregistries wie `registry.npmjs.org`, `pypi.org`, Maven Central), muss in `init-firewall.sh` in die Allowlist.
-2. **Sicherheitsmerkmale nicht aufweichen.** Mounts, Firewall, unprivilegierter Benutzer und die root-eigenen Konfigurationsdateien bleiben unverändert. Wer davon abweicht, betreibt ein eigenes Einsatzprofil mit erneuter Freigabepflicht.
+1. **Allowlist nachführen.** Was zur Bauzeit heruntergeladen wird, läuft an der Egress-Kontrolle vorbei. Was zur Laufzeit erreichbar sein soll, etwa Maven Central oder `crates.io`, gehört als Name in `allowlist.txt`.
+2. **Sicherheitsmerkmale nicht aufweichen.** Mounts, Egress-Kontrolle, unprivilegierter Benutzer und die root-eigenen Konfigurationsdateien bleiben unverändert. Wer davon abweicht, betreibt ein eigenes Einsatzprofil mit erneuter Freigabepflicht.
 
 ## Voraussetzung: rootful Docker
 
@@ -106,7 +123,7 @@ Bleiben zwei Wege:
    "remoteUser": "root"
    ```
 
-   Unter rootless Docker ist Container-`root` auf dem Host der unprivilegierte Benutzer, neue Dateien gehören korrekt dem Host-Benutzer, und die Egress-Firewall wirkt unverändert. **Die verwaltete Agentenkonfiguration ist dann aber nicht mehr geschützt:** Container-`root` kann `/etc/claude-code/managed-settings.json` und `/etc/codex/requirements.toml` überschreiben. Diese Variante ist deshalb **kein freigabefähiges Einsatzprofil** nach dem Leitfaden, sondern nur für lokale Tests gedacht.
+   Unter rootless Docker ist Container-`root` auf dem Host der unprivilegierte Benutzer, neue Dateien gehören korrekt dem Host-Benutzer, und die Egress-Kontrolle wirkt unverändert. **Die verwaltete Agentenkonfiguration ist dann aber nicht mehr geschützt:** Container-`root` kann `/etc/claude-code/managed-settings.json` und `/etc/codex/requirements.toml` überschreiben. Diese Variante ist deshalb **kein freigabefähiges Einsatzprofil** nach dem Leitfaden, sondern nur für lokale Tests gedacht.
 
 ## Transferierbarkeit auf Windows (DAP)
 - In VS Code auf dem Windows-Host sicherstellen:
