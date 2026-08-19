@@ -1,0 +1,53 @@
+# OpenAI Codex – verwaltete Vorgaben (Kanton Basel-Stadt)
+#
+# Ablage: /etc/codex/requirements.toml   (Linux, macOS)
+#         %ProgramData%\OpenAI\Codex\requirements.toml   (Windows)
+#
+# Diese Datei definiert die kantonalen Berechtigungsprofile UND schränkt ein,
+# was Nutzende davon auswählen dürfen. Die frühere zusätzliche Datei
+# managed_config.toml wird nicht mehr benötigt; Codex führt sie nur noch als
+# Legacy-Layer. Getestet mit codex-cli 0.148.0.
+#
+# WICHTIG (TOML): Alle einfachen Schlüssel müssen vor der ersten Tabellen-
+# überschrift stehen, sonst werden sie Teil der zuletzt geöffneten Tabelle.
+
+# Vorbelegtes Profil. Ohne diesen Schlüssel verlangt Codex, dass sowohl
+# :workspace als auch :read-only erlaubt sind, und bricht sonst ab.
+default_permissions = "bs-restricted-edit"
+
+# Erlaubte Freigabemodi. "never" fehlt bewusst: unbeaufsichtigter Betrieb
+# ist damit ausgeschlossen (Leitfaden Abschnitt 6, Ziffer 2).
+allowed_approval_policies = ["untrusted", "on-request"]
+
+# Erlaubte Sandbox-Modi. danger-full-access ist damit gesperrt.
+allowed_sandbox_modes = ["read-only", "workspace-write"]
+
+# Websuche deaktiviert.
+allowed_web_search_modes = ["disabled"]
+
+# Erlaubte Berechtigungsprofile: Tabelle Name -> bool, keine Liste.
+# Nicht aufgeführte Profile sind gesperrt, einschliesslich der eingebauten
+# Profile wie :danger-full-access.
+[allowed_permission_profiles]
+"bs-restricted-edit" = true
+"bs-readonly" = true
+
+# Definition der kantonalen Profile.
+[permissions.bs-readonly]
+description = "Nur Lesezugriff, kein Netzwerk"
+extends = ":read-only"
+
+[permissions.bs-readonly.network]
+enabled = false
+
+[permissions.bs-restricted-edit]
+description = "Schreibzugriff nur im Workspace, kein Netzwerk"
+extends = ":workspace"
+
+[permissions.bs-restricted-edit.network]
+enabled = false
+
+# Leere Tabelle = Allowlist ohne Einträge: jeder in einer Nutzer- oder
+# Projektkonfiguration definierte MCP-Server wird deaktiviert. Wird der
+# Schlüssel dagegen ganz weggelassen, sind MCP-Server erlaubt.
+[mcp_servers]
