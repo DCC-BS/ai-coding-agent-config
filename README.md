@@ -1,6 +1,6 @@
 # AI Coding Agent Config (DCC Basel-Stadt)
 
-Referenzkonfiguration des Data Competence Center (DCC) am Statistischen Amt Basel-Stadt für den sicheren Betrieb von KI-Coding-Agents (Claude Code, OpenAI Codex). Sie gehört zum Leitfaden «KI-Coding-Agents in der Softwareentwicklung sicher einsetzen» (Architektur 3, Anhang D).
+Referenzkonfiguration des Data Competence Center (DCC) am Statistischen Amt Basel-Stadt für den sicheren Betrieb von KI-Coding-Agents (Claude Code, OpenAI Codex). Sie gehört zum [Leitfaden «KI-Coding-Agents in der Softwareentwicklung sicher einsetzen»](Leitfaden.md) (Architektur 3, Anhang D).
 
 ## Was dieses Repository ist – und was nicht
 
