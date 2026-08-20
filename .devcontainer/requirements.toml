@@ -27,8 +27,11 @@ allowed_approval_policies = ["untrusted", "on-request"]
 # Erlaubte Sandbox-Modi. danger-full-access ist damit gesperrt.
 allowed_sandbox_modes = ["read-only", "workspace-write"]
 
-# Websuche deaktiviert.
-allowed_web_search_modes = ["disabled"]
+# Websuche zugelassen. Sie ist eine Angriffsfläche für Prompt Injection und
+# kein Weg für Datenabfluss: Was der Agent lesen kann, geht ohnehin über den
+# Modellprompt an den Anbieter. Begrenzt wird der Schaden dadurch, was in der
+# Umgebung liegt und was sie verlassen kann, nicht dadurch, was der Agent liest.
+allowed_web_search_modes = ["disabled", "cached", "indexed", "live"]
 
 # Erlaubte Berechtigungsprofile: Tabelle Name -> bool, keine Liste.
 # Nicht aufgeführte Profile sind gesperrt, einschliesslich der eingebauten
