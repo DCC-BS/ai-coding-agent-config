@@ -358,10 +358,6 @@ Vor Arbeitsbeginn verifiziert ein Startskript die Schutzwirkung über fünf auto
 ### D.3 Verwaltete Konfiguration der Werkzeuge
 Die Konfigurationsdateien liegen unter `/etc/claude-code/managed-settings.json` [10] bzw. `/etc/codex/requirements.toml` (`%ProgramData%\OpenAI\Codex\requirements.toml` unter Windows) [14].
 
-Die Web-Werkzeuge `WebFetch` und `WebSearch` sind zugelassen. Sie sind eine Angriffsfläche für Prompt Injection, aber kein Weg für Datenabfluss. Was der Agent liest, gelangt nach Abschnitt 2 ohnehin über den Modellprompt zum Anbieter. Den Schaden begrenzen die Datenschranke nach Abschnitt 4 und die Isolation, nicht eine Sperre der Lesequellen. Der Agent verarbeitet zudem laufend ungeprüfte Fremdinhalte aus Paketen, Abhängigkeiten und Tickets; eine Sperre verlagert diesen Weg, statt ihn zu schliessen, häufig auf ein manuelles Einfügen aus dem Browser. Dem steht ein spürbarer Gewinn an Arbeitsgeschwindigkeit gegenüber.
-
-Shell-Befehle zur Netzwerkübertragung (`curl`, `wget`, `nc`) sind gesperrt.
-
 Als Freigabemodus ist der strikte oder der abgestufte Modus zulässig; unüberwachte Modi sind deaktiviert.
 
 Bei OpenAI Codex ist zu beachten, dass unbekannte Konfigurationsschlüssel stillschweigend ignoriert werden. Die Wirksamkeit der Einstellungen ist daher nach Änderungen an einer laufenden Instanz (z. B. via `codex mcp list` und Startmeldungen) zu überprüfen. Zudem müssen einfache TOML-Schlüssel vor der ersten Tabellenüberschrift stehen.
