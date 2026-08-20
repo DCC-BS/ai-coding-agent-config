@@ -1,6 +1,6 @@
 # Leitfaden: KI-Coding-Agents in der Softwareentwicklung sicher einsetzen
 
-Dieser Leitfaden ist die Referenzimplementierung des Data Competence Center (DCC) am Statistischen Amt Basel-Stadt zur Richtlinie «Einsatz von KI-Agenten in der Softwareentwicklung». Andere kantonale Stellen passen die Umsetzung an ihre Rahmenbedingungen an. Die Mindestanforderungen (Abschnitt 4 und 6) sowie die Roten Linien gelten kantonsweit.
+Dieser Leitfaden ist die Referenzimplementierung des DCC Data Competence Center am Statistischen Amt Basel-Stadt zur Richtlinie «Einsatz von KI-Agenten in der Softwareentwicklung». Andere kantonale Stellen passen die Umsetzung an ihre Rahmenbedingungen an. Die Mindestanforderungen (Abschnitt 4 und 6) sowie die Roten Linien gelten kantonsweit.
 
 Der Leitfaden regelt ausschliesslich freigegebene KI-Coding-Agents für Softwareentwicklungsaufgaben. Andere KI-Agenten mit Computer-, Browser- oder allgemeinem Systemzugriff bleiben verboten.
 
@@ -64,7 +64,7 @@ Die formelle Freigabe erfolgt für jedes Einsatzprofil eines KI-Coding-Agents ü
 | **Zentraler Leistungserbringer (LE: IT BS) / Systemeigner (SE)** | IT BS / Plattformadministration (Schutzkatalog 2.4/2.5) | **R** | Bereitstellung und Härtung der DAP-Basisinfrastruktur, Softwareverteilung, Netzwerküberwachung. |
 | **Informationssicherheitsbeauftragte/r des Departements (ISBD)** | Fachstelle gemäss § 9 ISV (Schutzkatalog 2.8) | **R** (Prüfung)<br>**C** (Übriges) | Prüft das Einsatzprofil anhand der Checkliste (Abschnitt 7) vor Genehmigung durch die DE (inkl. Egress- und Container-Nachweise bei Architektur 3). Berät bei der SCHUBAN, führt das Risikoregister, nimmt Vorfallmeldungen entgegen. |
 | **Datenschutzberater/in des Departements (DDSB)** | Beratung gemäss IDG § 16b (Schutzkatalog 2.10) | **C** | Berät zum Personendatenausschluss (IDG § 3) und prüft Vendor-Datenschutzbedingungen. |
-| **Data Competence Center (DCC)** | KI-Kompetenzzentrum am Statistischen Amt | **C** | Fachlicher Eigner von Richtlinie und Leitfaden; berät technisch und pflegt die öffentlichen Referenz-Templates (<https://github.com/DCC-BS/ai-coding-agent-config>). Betreibt keine Container-Images für andere Stellen. |
+| **DCC Data Competence Center** | KI-Kompetenzzentrum am Statistischen Amt | **C** | Fachlicher Eigner von Richtlinie und Leitfaden; berät technisch und pflegt die öffentlichen Referenz-Templates (<https://github.com/DCC-BS/ai-coding-agent-config>). Betreibt keine Container-Images für andere Stellen. |
 | **Kantonale/r Informationssicherheitsbeauftragte/r (ISB)** | Leitung Fachstelle Informationssicherheit (§ 5 ISV) | **I** | Kantonale Vorgaben zur Informationssicherheit, aggregiertes Risikomanagement, Ausnahmebewilligungen. |
 | **Datenschutzbeauftragte/r des Kantons (DSB)** | Aufsichtsstelle (IDG § 37 f.) | **I** | Gesetzliche Aufsicht und Information bei Datenschutzverletzungen (IDG § 16a). |
 
