@@ -92,7 +92,7 @@ flowchart LR
         RL2["Dem Amtsgeheimnis unterstehende Inhalte (§ 19 Personalgesetz)"]
         RL3["Nicht-öffentliche Fachdaten und interna"]
         RL4["Secrets, Keys, Passwörter, Zertifikate"]
-        RL5["Interne DB-Strukturen"]
+        RL5["Interne DB-Infrastruktur "]
         RL6["Interne Hostnamen, URLs, IP-Bereiche"]
         RL7["Produktivsysteme und interne Netze"]
     end
@@ -102,7 +102,7 @@ flowchart LR
 1. **Keine Personendaten und keine Echtdaten.** Personendaten jeglicher Art (IDG § 3) [4] und nicht-öffentliche Fachdaten dürfen keinesfalls in den Kontext eines kantonsexternen Agenten gelangen.
 2. **Kein Amtsgeheimnis.** Angelegenheiten der Verwaltung, an deren Geheimhaltung ein überwiegendes öffentliches oder privates Interesse besteht (§ 19 Abs. 1 Personalgesetz) [8], bleiben ausgeschlossen. Das Amtsgeheimnis reicht weiter als der Personendatenbegriff und erfasst auch Inhalte ohne Personenbezug.
 3. **Keine Secrets.** Passwörter, API-Keys, SSH-Keys, Zertifikate und `.env`-Dateien dürfen in der Umgebung weder existieren noch erreichbar sein. Ausnahme ist das minimal berechtigte Repository-Token (Abschnitt 6, Ziff. 3) in Architektur 1 und 3.
-4. **Keine internen Netze.** Zugriff auf Datenbanken, FileBS, kantonales Intranet oder interne APIs ist verboten.
+4. **Keine internen Netze.** Zugriff auf Datenbanken, FileBS, kantonales Intranet oder interne APIs ist verboten. Betroffen sind Netzwerkzugriff sowie Betriebsdaten (Hostnamen, Connection-Strings, Zugangsdaten). Nicht betroffen ist die logische Datenstruktur (z. B. ORM-Modelle). Vorausgesetzt, sie enthalten keine Personendaten oder Fachdaten gemäss Ziff. 1.
 5. **Kein Produktivzugriff.** Deployments und direkte Änderungen an Produktivsystemen sind unzulässig.
 6. **Kein automatischer Merge.** Codeänderungen erfordern vor der Übernahme in geschützte Hauptbranches zwingend ein menschliches Review.
 
