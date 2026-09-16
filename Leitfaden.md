@@ -6,6 +6,8 @@ Der Leitfaden regelt ausschliesslich freigegebene KI-Coding-Agents für Software
 
 Der allgemeine Software-Engineering-Prozess ist nicht Gegenstand dieses Leitfadens. Code Review, Testtiefe, Vier-Augen-Prinzip und die Ausgestaltung der CI/CD verbleiben in der Verantwortung der jeweiligen Dienststelle.
 
+KI-Coding-Agenten bieten bei sachgerechtem Einsatz einen belegbaren Mehrwert: Studien weisen signifikante Produktivitätssteigerungen nach [19], und auch die Verbreitung ist bereits hoch. 2025 setzten laut Branchenerhebungen 84 % der Entwickelnden KI-Coding-Werkzeuge ein [20]. Dieser Leitfaden zielt deshalb nicht auf ein Verbot, sondern auf einen kontrollierten Einsatz, der diesen Nutzen ermöglicht, ohne die Vertraulichkeits- und Sicherheitsanforderungen des Kantons zu verletzen.
+
 ---
 
 ## 1. Zweck und Geltungsbereich
@@ -407,3 +409,5 @@ Die Hypervisor-Kapselung bietet technische Vorteile, ist jedoch kantonal derzeit
 [16] Microsoft, *WSL: Networking* und *Advanced settings configuration*: <https://learn.microsoft.com/en-us/windows/wsl/networking>, <https://learn.microsoft.com/en-us/windows/wsl/wsl-config>  
 [17] Microsoft, *VS Code: Sharing Git credentials with your container*: <https://code.visualstudio.com/remote/advancedcontainers/sharing-git-credentials>  
 [18] Docker, *Docker Sandboxes*: <https://docs.docker.com/ai/sandboxes/>
+[19] Microsoft, *The Impact of AI on Developer Productivity: Evidence from GitHub Copilot*: <https://www.microsoft.com/en-us/research/publication/the-impact-of-ai-on-developer-productivity-evidence-from-github-copilot/>  
+[20] Stack Overflow, *2025 Developer Survey*: <https://survey.stackoverflow.co/2025/ai>
