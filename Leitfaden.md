@@ -328,7 +328,7 @@ In der verwalteten Konfiguration ist `windows.allowed_sandbox_implementations = 
 
 ## Anhang D: Referenzkonfigurationen und Vorlagen
 
-Die Referenzkonfigurationen basieren auf Empfehlungen des Herrstellers [11, 12] und werden im öffentlichen DCC-Repository gepflegt:
+Die Referenzkonfigurationen basieren auf Empfehlungen des Herstellers [11, 12] und werden im öffentlichen DCC-Repository gepflegt:
 
 **<https://github.com/DCC-BS/ai-coding-agent-config>**
 
