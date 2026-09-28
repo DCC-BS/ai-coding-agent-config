@@ -2,9 +2,9 @@
 
 Referenzkonfiguration des Data Competence Center (DCC) am Statistischen Amt Basel-Stadt für den sicheren Betrieb von KI-Coding-Agents (Claude Code, OpenAI Codex). Sie gehört zum [Leitfaden «KI-Coding-Agents in der Softwareentwicklung sicher einsetzen»](Leitfaden.md) (Architektur 3, Anhang D).
 
-## Was dieses Repository ist – und was nicht
+## Was dieses Repository ist
 
-Dieses Repository ist eine **Vorlage zum Ableiten**, kein zentral betriebenes Image. Das DCC stellt keine fertigen Container-Images für andere Teams bereit und pflegt keine Toolchains für fremde Projekte.
+Dieses Repository ist eine **Vorlage zum Ableiten**. Das DCC stellt keine fertigen Container-Images für andere Teams bereit und pflegt keine Toolchains für fremde Projekte.
 
 Jedes Team baut seinen eigenen DevContainer auf Basis dieser Vorlage und ergänzt die Werkzeuge, die sein Projekt braucht: `uv` und eine bestimmte Python-Version, ein JDK, `bun` oder Node, Datenbank-Clients und Ähnliches. Verbindlich bleiben dabei die Sicherheitsmerkmale unten, nicht die Werkzeugauswahl.
 
